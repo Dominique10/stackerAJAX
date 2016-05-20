@@ -31,6 +31,31 @@ var showQuestion = function(question) {
 	return result;
 };
 
+function showAnswerers(topUsers){
+
+	// clone our result template code
+	var result = $('.templates2 .question2').clone();
+	
+	// Set the question properties in result
+	var questionElem = result.find('.question-text a');
+	questionElem.attr('href', topUsers.link);
+	questionElem.text(topUsers.display_name);
+
+	//set user reputation
+	var score = result.find('.viewed');
+	score.text(topUsers.score);
+
+	var asker = result.find('.asker');
+	asker.html('<p>Name: <a target="_blank" '+
+		'href=http://stackoverflow.com/users/' + topUsers.user.user_id + ' >' +
+		topUsers.user.display_name +
+		'</a></p>' +
+		'<p>Reputation: ' + topUsers.user.reputation + '</p>'
+	);
+
+	return result;
+};
+
 
 // this function takes the results object from StackOverflow
 // and returns the number of results and tags to be appended to DOM
@@ -80,9 +105,43 @@ var getUnanswered = function(tags) {
 		$('.search-results').append(errorElem);
 	});
 };
+function viewTopAnswerers(answerers){
+
+	// the parameters we need to pass in our request to StackOverflow's API
+	var requestAPI = { 
+		tag: answerers,
+		site: 'stackoverflow',
+		period: 'all_time'
+	};
+
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/"+ answerers +"/top-answerers/all_time",
+		data: requestAPI,
+		dataType: "jsonp",//use jsonp to avoid cross origin issues
+		type: "GET",
+	})
+	.done(function(result){ //this waits for the ajax to return with a succesful promise object
+		var searchResults = showSearchResults(requestAPI.tag, result.items.length);
+		console.log(searchResults);
+
+		$('.search-results').html(searchResults);
+		//$.each is a higher order function. It takes an array and a function as an argument.
+		//The function is executed once for each item in the array.
+		$.each(result.items, function(i, item) {
+			var topUsers =  showAnswerers(item);
+			$('.results').append(topUsers);
+		});
+	})
+
+	.fail(function(jqXHR, error){ //this waits for the ajax to return with an error promise object
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
 
 
 $(document).ready( function() {
+
 	$('.unanswered-getter').submit( function(e){
 		e.preventDefault();
 		// zero out results if previous search has run
@@ -90,5 +149,14 @@ $(document).ready( function() {
 		// get the value of the tags the user submitted
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
+	});
+
+	$('.inspiration-getter').submit( function(e){
+		e.preventDefault();
+		// zero out results if previous search has run
+		$('.results').html('');
+		var answerers = $(this).find("input[name='answerers']").val();
+		viewTopAnswerers(answerers);
+		console.log(answerers);
 	});
 });
