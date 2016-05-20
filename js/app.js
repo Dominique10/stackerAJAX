@@ -37,9 +37,9 @@ function showAnswerers(topUsers){
 	var result = $('.templates2 .question2').clone();
 	
 	// Set the question properties in result
-	var questionElem = result.find('.question-text a');
-	questionElem.attr('href', topUsers.link);
-	questionElem.text(topUsers.display_name);
+	var questionElem = result.find('.question-text');
+	//questionElem.attr('href', topUsers.link);
+	questionElem.text(topUsers.user.user_type);
 
 	//set user reputation
 	var score = result.find('.viewed');
